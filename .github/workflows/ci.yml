@@ -39,11 +39,15 @@ jobs:
         pip-sync requirements.lock
         python -m pip install -e .        # editable install
 
-    # 6) Ruff Format & Lint
-    - name: 🔍 Ruff format check
-      run: ruff format --check .
-    - name: 🔍 Ruff lint
-      run: ruff check .
+    # 6) Ruff Format & Lint (Auto-fix in CI)
+    - name: 🖋 Ruff format (apply Black-style)
+      run: ruff format .
+
+    - name: 🔧 Ruff lint auto-fix
+      run: ruff check . --fix      # I001, E401 etc. auto-fix
+
+    - name: 🔍 Ruff lint verify
+      run: ruff check .           # Verify no issues remain after fix
 
     # 7) Mypy
     - name: 🔍 Mypy strict typing
