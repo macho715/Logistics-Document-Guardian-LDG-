@@ -1,0 +1,57 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: 🧪 Lint • Type • Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ["3.11"]
+    steps:
+    # 1) 소스 체크아웃
+    - uses: actions/checkout@v4
+
+    # 2) Python 설치 (GitHub 제공 툴캐시 활용)
+    - name: ⬇️ Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"             # pip 캐시 활성화
+
+    # 3) OS‑별 Tesseract 설치
+    - name: 🛠️ Install Tesseract (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        powershell -ExecutionPolicy Bypass -File scripts/install_tesseract_win.ps1
+
+    - name: 🛠️ Install Tesseract (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        bash scripts/install_tesseract_apt.sh
+
+    # 4) 의존성 설치 (pip‑tools 잠금)
+    - name: 📦 Install Python deps via pip-sync
+      run: |
+        python -m pip install -U pip pip-tools
+        pip-sync requirements.lock
+        # src 패키지는 editable 설치 유지
+        python -m pip install -e .
+
+    # 5) Lint • Format • Type Check • Tests
+    - name: 🔍 Ruff & Black
+      run: |
+        ruff .
+        black --check .
+
+    - name: 🔍 Mypy strict typing
+      run: mypy .
+
+    - name: 🧪 Pytest
+      run: pytest -q
+
+    # 6) 커버리지 리포트 (선택)
+    # - name: Upload coverage
+    #   uses: codecov/codecov-action@v4 
