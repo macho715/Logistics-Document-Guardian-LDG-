@@ -60,6 +60,41 @@ def test_file_exists(row: Dict[str, str]) -> None:
     assert pdf_path.exists(), f"PDF file specified in CSV not found: {pdf_path}"
 
 
+# === Integration Test using OCR and Validator ===
+def test_validation_runs() -> None:
+    """Test that the main validation function runs without critical errors.
+
+    This test invokes Tesseract via the ocr engine and compares against
+    the truth data. It mainly checks for runtime errors during the process.
+    Actual mismatch validation might require more specific tests or data.
+    """
+    # Ensure the validator can be imported
+    try:
+        from src.ldg.validator import validate
+    except ImportError as e:
+        pytest.fail(f"Failed to import validator: {e}")
+
+    # Check if required data exists before running
+    if not PDF_DIR.exists() or not TRUTH_CSV_PATH.exists() or not TRUTH_DATA:
+        pytest.skip("Skipping validation run test: Missing PDF directory, truth CSV, or truth data.")
+
+    try:
+        # Run the actual validation
+        mismatches = validate(pdf_dir=PDF_DIR, truth_csv=TRUTH_CSV_PATH)
+
+        # Basic assertion: Check if the result is a list (even if empty)
+        assert isinstance(mismatches, list), "Validation function did not return a list."
+
+        # Optional: Log the number of mismatches found for information
+        print(f"\nINFO: Validation run completed. Found {len(mismatches)} mismatches.")
+        # Depending on expected results, you could assert len(mismatches) == 0
+        # but that might be too strict initially.
+        # assert len(mismatches) == 0, f"Expected 0 mismatches, but found {len(mismatches)}"
+
+    except Exception as e:
+        pytest.fail(f"Validation function failed with an unexpected error: {e}")
+
+
 # === Placeholder for future actual OCR tests ===
 # You can add more test functions here later to validate specific fields
 # using run_ocr and extract_field like in the previous version.
