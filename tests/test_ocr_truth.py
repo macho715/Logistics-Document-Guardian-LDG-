@@ -65,11 +65,15 @@ def test_file_exists(row: Dict[str, str]) -> None:
 # Example:
 #
 # from src.ocr.engine import run_ocr # Assuming src/ocr/engine.py exists
+# import re # Needed for the example regex
 #
-# def extract_field(text: str, field: str) -> str:
-#     # ... (your extraction logic here) ...
-#     result = "extracted_value" # Simulate getting a value
-#     return str(result) # Explicitly cast to str as requested
+# def extract_field(text: str, field: str) -> str: # Renamed placeholder for clarity
+#     """Placeholder extraction logic."""
+#     if field == "InvoiceNumber":
+#         m = re.search(r"INV[-–]?\d{4}[-–]?\d{4}", text)
+#         return m.group(0) if m else "" # Ensured str return
+#     # Add other field extractions here
+#     return "" # Default empty string return
 #
 # @pytest.mark.parametrize("row", rows(), ids=generate_test_ids)
 # def test_field_value(row: Dict[str, str]) -> None:
