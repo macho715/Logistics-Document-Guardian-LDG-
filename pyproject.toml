@@ -44,12 +44,11 @@ respect-gitignore = true
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "D"] # Simplified selection as per example
-ignore = [
-  "D100",   # 모듈 Docstring
-  "D203",   # Docstring 빈줄
-  "D213",   # Docstring 요약 2번째 줄
-  "D401",   # 명령형 docstring (Added)
-  "E501",   # 100자 초과 긴 줄 (Added)
+# Use extend-ignore for better management
+extend-ignore = [
+  "D401",  # imperative‑mood docstring
+  "E501",  # long lines > 100
+  "D100", "D203", "D213"  # Previously ignored Docstring rules
 ]
 per-file-ignores = { "tests/*" = ["D"], "scripts/*" = ["D"] }
 
