@@ -37,22 +37,20 @@ skip-string-normalization = true  # 프롬프트 보존
 # Ruff (린터 & 일부 타입 체크) — Flake8 + isort + pydocstyle 대체
 ###############################################################################
 [tool.ruff]
-target-version = "py311"
 line-length = 100
-fix = true                 # pre‑commit 단계에서 자동 수정
+# fix = true                 # pre‑commit 단계에서 자동 수정 -> Usually not needed in pyproject directly if using pre-commit hook
 respect-gitignore = true
 
-# 기본 Rule Set = E (pycodestyle) + F (pyflakes) + I (isort) + D (docstring)
-select = ["E", "F", "I", "D", "B", "UP", "PL"]
-ignore = [
-  "D203",  # 한 줄 요약 직후 공백 1줄 강제 → Google style에서 중복
-  "D213",  # 요약 "한 줄" 위치 규칙 충돌
-]
+[tool.ruff.lint]
+target-version = "py311"
+# select = ["E", "F", "I", "D", "B", "UP", "PL"] # Keep existing selection or adjust as needed
+select = ["E", "F", "I", "D"] # Simplified selection as per example
+ignore = ["D100"]                     # 모듈 Docstring 규칙 제외
+per-file-ignores = { "tests/*" = ["D"], "scripts/*" = ["D"] }
 
-[tool.ruff.per-file-ignores]
-# 테스트·예제에서는 Docstring 검사 완화
-"tests/**/*" = ["D"]
-"examples/**/*" = ["D"]
+[tool.ruff.format]
+# Options for the formatter if needed, usually defaults are fine
+# Or can remove if using `ruff format --check .` in CI is enough
 
 ###############################################################################
 # Mypy (정적 타입 검사) — strict 모드 + Pydantic 플러그인

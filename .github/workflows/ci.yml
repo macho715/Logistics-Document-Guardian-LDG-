@@ -3,66 +3,56 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  test:
-    name: 🧪 Lint • Type • Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false # Don't cancel other jobs if one fails
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-        python-version: ["3.11"]
+  win-test:
+    name: 🧪 Lint • Type • Test (Windows)
+    runs-on: windows-latest
+    # Removed strategy matrix as it's Windows only now
+
     steps:
-    # 1) 소스 체크아웃
+    # 1) Checkout
     - uses: actions/checkout@v4
 
-    # DEBUG: List files after checkout (OS-specific)
-    - name: 🐛 List files in workspace (Linux)
-      if: runner.os == 'Linux'
-      run: ls -la
-      # Default shell on Linux is bash
-
-    - name: 🐛 List files in workspace (Windows)
-      if: runner.os == 'Windows'
+    # 2) List files (디버그용·선택) - Using cmd shell for dir
+    - name: 📂 List files
       run: dir
-      shell: pwsh # Use PowerShell on Windows runner
+      shell: cmd
 
-    # 2) Python 설치 (GitHub 제공 툴캐시 활용)
-    - name: ⬇️ Setup Python ${{ matrix.python-version }}
+    # 3) Setup Python
+    - name: ⬇️ Setup Python 3.11
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
-        cache: "pip"             # pip 캐시 활성화
-        cache-dependency-path: requirements.lock # Explicitly point to the lock file
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: |
+          pyproject.toml
+          requirements.lock
 
-    # 3) OS‑별 Tesseract 설치
-    - name: 🛠️ Install Tesseract (Windows)
-      if: runner.os == 'Windows'
+    # 4) Tesseract 설치 (Windows PS1)
+    - name: 🛠 Install Tesseract
       run: powershell -ExecutionPolicy Bypass -File scripts/install_tesseract_win.ps1
 
-    - name: 🛠️ Install Tesseract (Ubuntu)
-      if: runner.os == 'Linux'
-      run: bash scripts/install_tesseract_apt.sh
-
-    # 4) 의존성 설치 (pip‑tools 잠금)
-    - name: 📦 Install Python deps via pip-sync
+    # 5) Python deps 설치
+    - name: 📦 Install deps
       run: |
-        python -m pip install -U pip pip-tools
+        python -m pip install -U pip
+        python -m pip install pip-tools
         pip-sync requirements.lock
-        # src 패키지는 editable 설치 유지
-        python -m pip install -e .
+        python -m pip install -e .        # editable install
 
-    # 5) Lint • Format • Type Check • Tests
-    - name: 🔍 Ruff & Black
-      run: |
-        ruff .
-        black --check .
+    # 6) Ruff Format & Lint
+    - name: 🔍 Ruff format check
+      run: ruff format --check .
+    - name: 🔍 Ruff lint
+      run: ruff check .
 
+    # 7) Mypy
     - name: 🔍 Mypy strict typing
       run: mypy .
 
+    # 8) Pytest
     - name: 🧪 Pytest
       run: pytest -q
 
-    # 6) 커버리지 리포트 (선택)
+    # 9) 커버리지 리포트 (선택)
     # - name: Upload coverage
     #   uses: codecov/codecov-action@v4 
