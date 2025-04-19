@@ -1,0 +1,1 @@
+[![CI](https://github.com/macho715/Logistics-Document-Guardian-LDG-/actions/workflows/ci.yml/badge.svg)](https://github.com/macho715/Logistics-Document-Guardian-LDG-/actions/workflows/ci.yml) 
