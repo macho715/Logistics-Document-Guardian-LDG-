@@ -59,18 +59,57 @@ per-file-ignores = { "tests/*" = ["D"], "scripts/*" = ["D"] }
 ###############################################################################
 # Mypy (정적 타입 검사) — strict 모드 + Pydantic 플러그인
 ###############################################################################
+
+# ─────────────────────────── mypy 권장 설정 ───────────────────────────
 [tool.mypy]
 python_version = "3.11"
-strict = true               # 모든 *strict* 옵션 일괄 활성
-plugins = ["pydantic.mypy"] # Pydantic v2
 
-# 3rd‑party stub 누락 무시 목록
+# 1) 엄격 모드 + 가독성
+strict = true
+show_error_codes = true
+pretty = true
+
+# 2) src 레이아웃 중복‑모듈 오류 방지
+mypy_path = "src"
+explicit_package_bases = true      # "ldg.validator" / "src.ldg.validator" 중복 제거
+
+# 3) 외부 import 처리 전략
+#    - stub 없으면 경고로 두고, 정말 필요한 모듈만 override 로 무시
+ignore_missing_imports = false
+follow_imports = "skip"
+no_implicit_reexport = true
+
+# 4) 플러그인 (선택)
+plugins = [
+  "pydantic.mypy",                 # pydantic v2 사용 시
+  # "sqlalchemy.ext.mypy.plugin",   # SQLAlchemy ORM 사용 시 주석 해제
+]
+
+# 5) 경고가 필요 없는 외부 라이브러리 stub 무시
 [[tool.mypy.overrides]]
 module = [
-  "typer.*",
-  "tesserocr.*",
+  "pytesseract.*", # Keep this if using pytesseract wrapper later
+  "openai.*",      # Keep existing openai ignore
+  "typer.*",       # Add back typer ignore from previous config
 ]
 ignore_missing_imports = true
+
+# 6) tests·scripts 폴더는 엄격 검사 제외(원하면 유지)
+[[tool.mypy.overrides]]
+module = ["tests.*", "scripts.*"]
+ignore_errors = true
+
+# 7) 빌드 산출물 등 완전 제외
+exclude = [
+  "^dist/.*$",
+  "^build/.*$",
+]
+# ───────────────────────────────────────────────────────────────────
+
+# This section is only needed if using pydantic plugin
+[tool.pydantic-mypy]
+init_forbid_extra = true
+warn_required_fields = true
 
 ###############################################################################
 # Pytest — 경로 & coverage
