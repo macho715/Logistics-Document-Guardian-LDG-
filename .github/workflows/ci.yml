@@ -24,13 +24,11 @@ jobs:
     # 3) OS‑별 Tesseract 설치
     - name: 🛠️ Install Tesseract (Windows)
       if: runner.os == 'Windows'
-      run: |
-        powershell -ExecutionPolicy Bypass -File scripts/install_tesseract_win.ps1
+      run: powershell -ExecutionPolicy Bypass -File scripts/install_tesseract_win.ps1
 
     - name: 🛠️ Install Tesseract (Ubuntu)
       if: runner.os == 'Linux'
-      run: |
-        bash scripts/install_tesseract_apt.sh
+      run: bash scripts/install_tesseract_apt.sh
 
     # 4) 의존성 설치 (pip‑tools 잠금)
     - name: 📦 Install Python deps via pip-sync
