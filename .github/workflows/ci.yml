@@ -51,7 +51,7 @@ jobs:
     - name: 🖋 Ruff format (apply Black-style)
       run: ruff format .
 
-    - name: �� Ruff lint auto-fix -- ignore D401,E501
+    - name: 🖋 Ruff lint auto-fix -- ignore D401,E501
       # Force ignore specific rules directly in the CI command
       run: ruff check . --fix --ignore D401,E501
 
@@ -63,7 +63,8 @@ jobs:
 
     # 8) Mypy
     - name: 🔍 Mypy strict typing
-      run: mypy .
+      # Run mypy only on src and tests directories to avoid duplicate module errors
+      run: mypy src tests
 
     # 9) Pytest
     - name: 🧪 Pytest
