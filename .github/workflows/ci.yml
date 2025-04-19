@@ -68,8 +68,13 @@ jobs:
 
     # 9) Pytest
     - name: 🧪 Pytest
-      run: pytest -q
+      run: pytest -q # Pytest should be configured in pyproject.toml to generate coverage
 
     # 10) 커버리지 리포트 (선택)
-    # - name: Upload coverage
-    #   uses: codecov/codecov-action@v4 
+    - name: ⬆️ Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      # No token needed for public repositories on GitHub Actions
+      # with:
+      #   token: ${{ secrets.CODECOV_TOKEN }} # Only required for private repos
+
+# End of job 
