@@ -45,7 +45,8 @@ def generate_test_ids(row: Dict[str, Any]) -> str:
     """Generates a readable ID for parametrized tests based on file_name."""
     # Handle cases where TRUTH_DATA might be empty or row is not a dict
     if isinstance(row, dict):
-        return row.get("file_name", "invalid_row_data")
+        # Explicitly cast the result of get() to str to satisfy mypy [no-any-return]
+        return str(row.get("file_name", "invalid_row_data"))
     return "invalid_row_format"
 
 
