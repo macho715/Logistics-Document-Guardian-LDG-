@@ -3,8 +3,10 @@ OCR PoC — truth‑set validation.
 Run with: pytest -q
 """
 
+import csv
 from pathlib import Path
-import csv, pytest
+
+import pytest
 
 PDF_DIR = Path("data/pdf")
 TRUTH_CSV_PATH = Path("data/truth/truth_sample.csv")

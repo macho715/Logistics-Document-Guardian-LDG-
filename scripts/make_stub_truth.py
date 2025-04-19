@@ -1,8 +1,8 @@
 """Utility to generate a stub truth_sample.csv from PDF filenames."""
 
 # scripts/make_stub_truth.py
-from pathlib import Path
 import csv
+from pathlib import Path
 
 PDF_DIR = Path("data/pdf")
 TRUTH = Path("data/truth/truth_sample.csv")
