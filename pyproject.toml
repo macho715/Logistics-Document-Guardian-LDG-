@@ -3,12 +3,18 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "logistics-doc-guardian"
+name = "ocr-ldg-project"
 version = "0.1.0"
 description = "OCR + LDG validation pipeline"
 authors = [{ name = "Macho", email = "you@example.com" }]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+  "typer[all]>=0.12",
+  "pydantic>=2.6",
+  "python-docx",            # 예: 나중에 여분 파싱
+  "pillow>=10.0",
+  "openai",
+]
 optional-dependencies.dev = [
   "black==24.3.0",
   "ruff==0.4.3",
