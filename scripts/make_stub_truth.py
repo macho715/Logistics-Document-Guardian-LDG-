@@ -1,3 +1,4 @@
+"""Utility to generate a stub truth_sample.csv from PDF filenames."""
 # scripts/make_stub_truth.py
 from pathlib import Path
 import csv
