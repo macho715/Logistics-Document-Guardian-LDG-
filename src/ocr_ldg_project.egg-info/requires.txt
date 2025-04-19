@@ -1,0 +1,14 @@
+typer[all]>=0.12
+pydantic>=2.6
+python-docx
+pillow>=10.0
+openai
+
+[dev]
+black==24.3.0
+ruff==0.4.3
+mypy==1.10.0
+pytest>=8.1
+pytest-cov
+pydocstyle
+pre-commit>=3.7

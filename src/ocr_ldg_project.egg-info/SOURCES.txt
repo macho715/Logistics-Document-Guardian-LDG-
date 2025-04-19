@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+src/cli/__init__.py
+src/cli/main.py
+src/ldg/__init__.py
+src/ldg/rules.py
+src/ldg/validator.py
+src/ocr/__init__.py
+src/ocr/engine.py
+src/ocr_ldg_project.egg-info/PKG-INFO
+src/ocr_ldg_project.egg-info/SOURCES.txt
+src/ocr_ldg_project.egg-info/dependency_links.txt
+src/ocr_ldg_project.egg-info/requires.txt
+src/ocr_ldg_project.egg-info/top_level.txt
+tests/test_engine.py
+tests/test_ocr_truth.py

@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: ocr-ldg-project
+Version: 0.1.0
+Summary: OCR + LDG validation pipeline
+Author-email: Macho <you@example.com>
+Requires-Python: >=3.11
+Requires-Dist: typer[all]>=0.12
+Requires-Dist: pydantic>=2.6
+Requires-Dist: python-docx
+Requires-Dist: pillow>=10.0
+Requires-Dist: openai
+Provides-Extra: dev
+Requires-Dist: black==24.3.0; extra == "dev"
+Requires-Dist: ruff==0.4.3; extra == "dev"
+Requires-Dist: mypy==1.10.0; extra == "dev"
+Requires-Dist: pytest>=8.1; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: pydocstyle; extra == "dev"
+Requires-Dist: pre-commit>=3.7; extra == "dev"
