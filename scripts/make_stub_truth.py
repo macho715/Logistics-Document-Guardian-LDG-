@@ -27,7 +27,7 @@ else:
     header = rows[0].keys()
 
 with TRUTH.open("w", newline="", encoding="utf-8") as f:
-    writer = csv.DictWriter(f, fieldnames=header)
+    writer = csv.DictWriter(f, fieldnames=list(header))
     writer.writeheader()
     if rows:
         writer.writerows(rows)

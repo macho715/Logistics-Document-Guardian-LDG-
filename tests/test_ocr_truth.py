@@ -5,6 +5,7 @@ Run with: pytest -q
 
 import csv
 from pathlib import Path
+from typing import Dict, List, Any
 
 import pytest
 
@@ -13,7 +14,7 @@ TRUTH_CSV_PATH = Path("data/truth/truth_sample.csv")
 
 
 # Load CSV data at the module level for parametrization
-def load_truth_data():
+def load_truth_data() -> List[Dict[str, str]]:
     if not TRUTH_CSV_PATH.exists():
         return []  # Return empty list if file not found
     try:
@@ -29,18 +30,18 @@ def load_truth_data():
     return []  # Should not be reached, but for safety
 
 
-TRUTH_DATA = load_truth_data()
+TRUTH_DATA: List[Dict[str, str]] = load_truth_data()
 
 
 # Optional: If you still need the data as a fixture elsewhere
 @pytest.fixture(scope="session")
-def rows():
+def rows() -> List[Dict[str, str]]:
     if not TRUTH_DATA:
         pytest.skip(f"No data loaded from {TRUTH_CSV_PATH} or file not found.")
     return TRUTH_DATA
 
 
-def generate_test_ids(row):
+def generate_test_ids(row: Dict[str, Any]) -> str:
     """Generates a readable ID for parametrized tests based on file_name."""
     # Handle cases where TRUTH_DATA might be empty or row is not a dict
     if isinstance(row, dict):
@@ -50,7 +51,7 @@ def generate_test_ids(row):
 
 # Parametrize using the loaded data
 @pytest.mark.parametrize("row", TRUTH_DATA, ids=generate_test_ids)
-def test_file_exists(row):
+def test_file_exists(row: Dict[str, str]) -> None:
     """Simplest test: Check if the PDF file mentioned in the CSV exists."""
     file_name = row.get("file_name")
     assert file_name, f"Missing 'file_name' in row: {row}"
@@ -70,7 +71,7 @@ def test_file_exists(row):
 #     return "extracted_value"
 #
 # @pytest.mark.parametrize("row", rows(), ids=generate_test_ids)
-# def test_field_value(row):
+# def test_field_value(row: Dict[str, str]) -> None:
 #     field_name = row.get("field_name")
 #     expected_value = row.get("expected_text")
 #

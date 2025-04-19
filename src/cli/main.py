@@ -10,7 +10,7 @@ app = typer.Typer()
 
 
 @app.command()
-def ocr_run(file: str, lang: str = "eng+kor"):
+def ocr_run(file: str, lang: str = "eng+kor") -> None:
     """Run OCR and LDG validation on FILE."""
     # text = run_ocr(file, lang=lang) # F841 - unused variable, OCR result needed later?
     # Placeholder JSON parse, to be implemented - using dummy data for now
