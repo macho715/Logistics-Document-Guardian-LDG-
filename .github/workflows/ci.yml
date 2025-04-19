@@ -17,7 +17,15 @@ jobs:
       run: dir
       shell: cmd
 
-    # 3) Setup Python
+    # 3) List data/pdf
+    - name: 🔍 List data/pdf
+      run: |
+        echo "CI workspace: $(pwd)"
+        echo "--- Listing data/pdf ---"
+        ls -l data/pdf || echo "data/pdf directory not found or empty"
+      shell: bash
+
+    # 4) Setup Python
     - name: ⬇️ Setup Python 3.11
       uses: actions/setup-python@v5
       with:
@@ -27,11 +35,11 @@ jobs:
           pyproject.toml
           requirements.lock
 
-    # 4) Tesseract 설치 (Windows PS1)
+    # 5) Tesseract 설치 (Windows PS1)
     - name: 🛠 Install Tesseract
       run: powershell -ExecutionPolicy Bypass -File scripts/install_tesseract_win.ps1
 
-    # 5) Python deps 설치
+    # 6) Python deps 설치
     - name: 📦 Install deps
       run: |
         python -m pip install -U pip
@@ -39,7 +47,7 @@ jobs:
         pip-sync requirements.lock
         python -m pip install -e .        # editable install
 
-    # 6) Ruff Format & Lint (Auto-fix in CI)
+    # 7) Ruff Format & Lint (Auto-fix in CI)
     - name: 🖋 Ruff format (apply Black-style)
       run: ruff format .
 
@@ -49,14 +57,14 @@ jobs:
     - name: 🔍 Ruff lint verify
       run: ruff check .           # Verify no issues remain after fix
 
-    # 7) Mypy
+    # 8) Mypy
     - name: 🔍 Mypy strict typing
       run: mypy .
 
-    # 8) Pytest
+    # 9) Pytest
     - name: 🧪 Pytest
       run: pytest -q
 
-    # 9) 커버리지 리포트 (선택)
+    # 10) 커버리지 리포트 (선택)
     # - name: Upload coverage
     #   uses: codecov/codecov-action@v4 
