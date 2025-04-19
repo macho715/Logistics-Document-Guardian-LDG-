@@ -43,8 +43,6 @@ target-version = "py311"
 respect-gitignore = true
 
 [tool.ruff.lint]
-target-version = "py311"
-# select = ["E", "F", "I", "D", "B", "UP", "PL"] # Keep existing selection or adjust as needed
 select = ["E", "F", "I", "D"] # Simplified selection as per example
 ignore = ["D100", "D203", "D213"] # Added D203, D213 to ignore conflicting rules
 per-file-ignores = { "tests/*" = ["D"], "scripts/*" = ["D"] }
