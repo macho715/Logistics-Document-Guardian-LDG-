@@ -119,6 +119,19 @@ minversion = "8.0"
 addopts = "-ra -q --cov=src --cov-report=term-missing"
 testpaths = ["tests"]
 
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "src/cli/main.py", # Exclude CLI entry point from coverage
+    "src/ocr_ldg_project.egg-info/*", # Exclude build artifacts
+    "src/__pycache__/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80 # Fail CI if coverage drops below 80%
+
 ###############################################################################
 # pre‑commit  — 저장 → 자동 포맷/린트
 ###############################################################################

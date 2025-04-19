@@ -1,109 +1,69 @@
-"""OCR Engine module.
+"""OCR 엔진 래퍼 (Tesseract).
 
-This module wraps Tesseract OCR calls and standardises output.
-
-Functions
----------
-run_ocr(path: str, lang: str = "eng+kor") -> str
-    Perform OCR on the given image or PDF path.
+- 다중 페이지 PDF: 1‑based `page` 인덱스 사용
+- 실패 시 빈 문자열을 반환하고 logger warning 출력
 """
 
+from __future__ import annotations
 from pathlib import Path
 import subprocess
-import tempfile
 import logging
+import tempfile
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
+def _run_tesseract(image_path: Path, txt_path: Path, lang: str) -> None:
+    """Invoke tesseract CLI; raise CalledProcessError on non‑zero exit."""
+    subprocess.run(
+        ["tesseract", str(image_path), str(txt_path.stem), "-l", lang, "--psm", "4"],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
 def extract_text(pdf_path: Path, page: int = 1, lang: str = "eng+kor") -> str:
-    """Run Tesseract on a specific `page` of the PDF and return raw text.
+    """Return OCR text of **one** page; empty string on failure."""
+    if page < 1:
+        raise ValueError("page must be ≥ 1")
 
-    Args:
-        pdf_path: Path to the input PDF file.
-        page: The 1-based page number to OCR.
-        lang: Tesseract language string (e.g., "eng+kor").
+    with tempfile.TemporaryDirectory() as tmpdir:
+        png = Path(tmpdir) / f"page_{page}.png"
+        txt = Path(tmpdir) / f"page_{page}.txt"
 
-    Returns:
-        The extracted text as a string.
-
-    Raises:
-        FileNotFoundError: If the input PDF does not exist.
-        subprocess.CalledProcessError: If the Tesseract command fails.
-        Exception: For other potential errors during processing.
-    """
-    if not pdf_path.exists():
-        raise FileNotFoundError(f"Input PDF not found: {pdf_path}")
-
-    # Tesseract outputs to stdout if outputbase is 'stdout'
-    # However, handling PDF pages often requires intermediate files or specific syntax.
-    # Tesseract syntax for specific page: `tesseract input.pdf outputbase --psm X -l lang page_number`
-    # Note: Tesseract page numbers are 0-indexed in some contexts, but the command often takes the page number directly.
-    # Let's try directing output to a temporary file stem.
-
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_path = Path(tmpdir)
-            output_base = tmp_path / f"{pdf_path.stem}_p{page}"
-            tesseract_cmd = [
-                "tesseract",
-                str(pdf_path),
-                str(output_base), # Use base name for output txt file
-                "-l", lang,
-                "--psm", "4", # Assume a single column of text of variable sizes.
-                # Tesseract 5+ syntax for pages is often just the number at the end
-                # Let's clarify if page needs index or number. For now assuming 1-based index for clarity.
-                # Tesseract itself often uses 0-based index for page segmentation internally.
-                # Revisit if page selection fails. Trying page number directly.
-                # Edit: The '[page-1]' syntax is more common for direct image inputs, not PDF processing.
-                # Tesseract CLI handles PDF page selection implicitly or via config.
-                # Simpler command: tesseract input.pdf outputbase -l lang --psm 4
-                # To select a page, config variables or preprocessing might be needed if not default.
-                # Let's stick to the simpler command first, assuming page 1 if not specified.
-                # Trying the original command structure again with explicit page index.
-                # Command often looks like: tesseract imagename outputbase [-l lang] [--psm pagesegmode] [configfile...]
-                # Let's test the original approach with index
-            ]
-
-            log.info(f"Running Tesseract: {' '.join(tesseract_cmd)}")
-            # Run Tesseract - Use shell=False for security and better argument handling
-            result = subprocess.run(
-                tesseract_cmd, 
-                capture_output=True, # Capture stdout/stderr
-                text=True, # Decode stdout/stderr as text
-                check=True, # Raise exception on non-zero exit code
-                encoding='utf-8' # Ensure consistent encoding
+        # 1️⃣ PDF page → PNG via Ghostscript
+        try:
+            subprocess.run(
+                [
+                    "gswin64c",  # Windows ghostscript CLI; rename if needed
+                    "-sDEVICE=png16m",
+                    "-r300",
+                    f"-dFirstPage={page}",
+                    f"-dLastPage={page}",
+                    "-o", str(png),
+                    str(pdf_path),
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
+        except subprocess.CalledProcessError as exc:
+            log.warning("Ghostscript rasterize failed: %s", exc.stderr.decode())
+            return ""
+        except FileNotFoundError:
+            log.error("Ghostscript command (gswin64c) not found. Ensure Ghostscript is installed and in PATH.")
+            return ""
 
-            log.info(f"Tesseract stdout:\n{result.stdout}")
-            if result.stderr:
-                log.warning(f"Tesseract stderr:\n{result.stderr}")
-            
-            # Expected output file: output_base.txt
-            output_file = output_base.with_suffix('.txt')
 
-            if not output_file.exists():
-                # If page parameter is needed, Tesseract might need a different syntax or config
-                # Log error and raise exception
-                log.error(f"Tesseract did not produce the expected output file: {output_file}")
-                raise RuntimeError(f"Tesseract failed to create output file. Check Tesseract logs or command syntax. Stderr: {result.stderr}")
-
-            log.info(f"Reading Tesseract output from: {output_file}")
-            extracted_text = output_file.read_text(encoding="utf-8")
-            return extracted_text
-
-    except FileNotFoundError:
-        log.error(f"Input PDF not found: {pdf_path}")
-        raise
-    except subprocess.CalledProcessError as e:
-        log.error(f"Tesseract command failed with exit code {e.returncode}")
-        log.error(f"Stderr: {e.stderr}")
-        log.error(f"Stdout: {e.stdout}")
-        raise
-    except Exception as e:
-        log.error(f"An unexpected error occurred during OCR: {e}")
-        raise
+        # 2️⃣ Tesseract OCR
+        try:
+            _run_tesseract(png, txt, lang)
+            return txt.read_text(encoding="utf-8", errors="ignore")
+        except subprocess.CalledProcessError as exc:
+            log.warning("Tesseract OCR failed: %s", exc.stderr.decode())
+            return ""
+        except FileNotFoundError:
+            log.error("Tesseract command not found. Ensure Tesseract is installed and in PATH.")
+            return ""
 
 def run_ocr(pdf_path: Path, lang: str = "eng", dpi: int = 300) -> str:
     """Provide a placeholder for the actual OCR engine logic."""
