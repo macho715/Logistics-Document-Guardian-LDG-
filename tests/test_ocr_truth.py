@@ -7,24 +7,42 @@ from pathlib import Path
 import csv, pytest
 
 PDF_DIR = Path("data/pdf")
-TRUTH = Path("data/truth/truth_sample.csv")
+TRUTH_CSV_PATH = Path("data/truth/truth_sample.csv")
 
+# Load CSV data at the module level for parametrization
+def load_truth_data():
+    if not TRUTH_CSV_PATH.exists():
+        return [] # Return empty list if file not found
+    try:
+        with TRUTH_CSV_PATH.open(encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            data = list(reader)
+            # Basic check for header - assumes 'file_name' is essential
+            if data and 'file_name' not in data[0]:
+                 pytest.fail(f"Required column 'file_name' not found in {TRUTH_CSV_PATH}")
+            return data
+    except Exception as e:
+        pytest.fail(f"Error reading {TRUTH_CSV_PATH}: {e}")
+    return [] # Should not be reached, but for safety
+
+TRUTH_DATA = load_truth_data()
+
+# Optional: If you still need the data as a fixture elsewhere
 @pytest.fixture(scope="session")
 def rows():
-    if not TRUTH.exists():
-        pytest.skip(f"Truth CSV not found: {TRUTH}")
-    with TRUTH.open(encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        data = list(reader)
-        if not data:
-            pytest.skip(f"No data rows found in {TRUTH}")
-        return data
+    if not TRUTH_DATA:
+         pytest.skip(f"No data loaded from {TRUTH_CSV_PATH} or file not found.")
+    return TRUTH_DATA
 
 def generate_test_ids(row):
     """Generates a readable ID for parametrized tests based on file_name."""
-    return row.get("file_name", "unknown_file")
+    # Handle cases where TRUTH_DATA might be empty or row is not a dict
+    if isinstance(row, dict):
+        return row.get("file_name", "invalid_row_data")
+    return "invalid_row_format"
 
-@pytest.mark.parametrize("row", rows(), ids=generate_test_ids)
+# Parametrize using the loaded data
+@pytest.mark.parametrize("row", TRUTH_DATA, ids=generate_test_ids)
 def test_file_exists(row):
     """Simplest test: Check if the PDF file mentioned in the CSV exists."""
     file_name = row.get("file_name")
