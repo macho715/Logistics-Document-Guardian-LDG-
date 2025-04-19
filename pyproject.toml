@@ -14,6 +14,7 @@ dependencies = [
   "python-docx",            # 예: 나중에 여분 파싱
   "pillow>=10.0",
   "openai",
+  "google-cloud-documentai>=2.20.0",
 ]
 optional-dependencies.dev = [
   "black==24.3.0",

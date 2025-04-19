@@ -1,91 +1,91 @@
-"""OCR 엔진 래퍼 (Tesseract).
+"""OCR 엔진 래퍼 (Google Cloud Document AI).
 
-- 다중 페이지 PDF: 1‑based `page` 인덱스 사용
-- 실패 시 빈 문자열을 반환하고 logger warning 출력
+- Uses synchronous API (`process_document`).
+- Requires GCP Project ID, Location, and Processor ID.
+- Returns full document text; returns empty string on API error.
 """
 
 from __future__ import annotations
 from pathlib import Path
-import subprocess
 import logging
-import tempfile
+
+# Import the Google Cloud Document AI client library
+try:
+    from google.cloud import documentai_v1 as docai
+    from google.api_core.exceptions import GoogleAPICallError
+except ImportError:
+    # Allow module to be imported even if library is not installed,
+    # functions will raise ImportError on call.
+    docai = None
+    GoogleAPICallError = None
+    print("WARNING: google-cloud-documentai library not found. OCR functions will fail.")
+
 
 log = logging.getLogger(__name__)
 
-def _run_tesseract(image_path: Path, txt_path: Path, lang: str) -> None:
-    """Invoke tesseract CLI; raise CalledProcessError on non‑zero exit."""
-    subprocess.run(
-        ["tesseract", str(image_path), str(txt_path.stem), "-l", lang, "--psm", "4"],
-        check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+def extract_text(
+    pdf_path: Path,
+    project_id: str,
+    location: str,        # e.g., "us"
+    processor_id: str,    # The processor ID from GCP console
+    mime_type: str = "application/pdf",
+) -> str:
+    """Process a single document with Document AI, return full text.
 
-def extract_text(pdf_path: Path, page: int = 1, lang: str = "eng+kor") -> str:
-    """Return OCR text of **one** page; empty string on failure."""
-    if page < 1:
-        raise ValueError("page must be ≥ 1")
+    Args:
+        pdf_path: Path to the local PDF file.
+        project_id: GCP Project ID.
+        location: GCP location for the Document AI processor (e.g., "us").
+        processor_id: The ID of the Document AI processor.
+        mime_type: MIME type of the file (default: "application/pdf").
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        png = Path(tmpdir) / f"page_{page}.png"
-        txt = Path(tmpdir) / f"page_{page}.txt"
+    Returns:
+        The full extracted text of the document, or an empty string
+        if an error occurs during processing.
+    """
+    if docai is None:
+        raise ImportError("google-cloud-documentai library is required but not installed.")
 
-        # 1️⃣ PDF page → PNG via Ghostscript
-        try:
-            subprocess.run(
-                [
-                    "gswin64c",  # Windows ghostscript CLI; rename if needed
-                    "-sDEVICE=png16m",
-                    "-r300",
-                    f"-dFirstPage={page}",
-                    f"-dLastPage={page}",
-                    "-o", str(png),
-                    str(pdf_path),
-                ],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-        except subprocess.CalledProcessError as exc:
-            log.warning("Ghostscript rasterize failed: %s", exc.stderr.decode())
-            return ""
-        except FileNotFoundError:
-            log.error("Ghostscript command (gswin64c) not found. Ensure Ghostscript is installed and in PATH.")
-            return ""
+    log.info(f"Processing {pdf_path} with Document AI processor {processor_id} in {location}")
 
+    try:
+        # Instantiates a client
+        # You must configure Application Default Credentials for this to work
+        # See: https://cloud.google.com/docs/authentication/provide-credentials-adc
+        client_options = {"api_endpoint": f"{location}-documentai.googleapis.com"}
+        client = docai.DocumentProcessorServiceClient(client_options=client_options)
 
-        # 2️⃣ Tesseract OCR
-        try:
-            _run_tesseract(png, txt, lang)
-            return txt.read_text(encoding="utf-8", errors="ignore")
-        except subprocess.CalledProcessError as exc:
-            log.warning("Tesseract OCR failed: %s", exc.stderr.decode())
-            return ""
-        except FileNotFoundError:
-            log.error("Tesseract command not found. Ensure Tesseract is installed and in PATH.")
-            return ""
+        # The full resource name of the processor
+        # e.g. projects/project-id/locations/location/processors/processor-id
+        name = client.processor_path(project_id, location, processor_id)
 
-def run_ocr(pdf_path: Path, lang: str = "eng", dpi: int = 300) -> str:
-    """Provide a placeholder for the actual OCR engine logic."""
-    print(f"INFO: OCR simulation for {pdf_path} with lang='{lang}', dpi={dpi}")
-    # In a real scenario, this would invoke Tesseract or another OCR tool
-    # and return the extracted text.
-    # For now, returning dummy text based on filename:
-    if "inv_0001" in pdf_path.name:
-        return (
-            "Dummy OCR text for inv_0001.pdf\n"
-            "InvoiceNumber: INV-2025-0001\n"
-            "Consignee: Samsung C&T\n..."
-        )
-    return f"Dummy OCR text for {pdf_path.name}"
+        # Read the file contents
+        with pdf_path.open("rb") as file_content:
+            pdf_content = file_content.read()
 
+        # Load Binary Data into Document AI RawDocument Structure
+        raw_document = docai.RawDocument(content=pdf_content, mime_type=mime_type)
 
-def process_directory(input_dir: Path, output_dir: Path, lang: str = "eng", dpi: int = 300) -> None:
-    """Process all PDFs in a directory."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    for pdf_file in input_dir.glob("*.pdf"):
-        print(f"Processing {pdf_file.name}...")
-        text = run_ocr(pdf_file, lang=lang, dpi=dpi)
-        output_file = output_dir / f"{pdf_file.stem}.txt"
-        output_file.write_text(text, encoding="utf-8")
-        print(f"  -> Saved text to {output_file}")
+        # Configure the process request
+        request = docai.ProcessRequest(name=name, raw_document=raw_document)
+
+        # Use the Document AI client to process the sample form
+        result = client.process_document(request=request)
+        document = result.document
+
+        log.info(f"Document AI processing successful for {pdf_path}")
+        return document.text or "" # Return empty string if text is None
+
+    except GoogleAPICallError as e:
+        log.error(f"Document AI API call failed for {pdf_path}: {e}")
+        return ""
+    except FileNotFoundError:
+        log.error(f"Input file not found: {pdf_path}")
+        # Re-raise standard FileNotFoundError for caller to handle
+        raise
+    except Exception as e:
+        # Catch any other unexpected exceptions during processing
+        log.error(f"An unexpected error occurred during Document AI processing for {pdf_path}: {e}", exc_info=True)
+        return ""
+
+# Note: The previous Tesseract/Ghostscript related functions are removed.

@@ -12,17 +12,24 @@ from src.ocr.engine import extract_text
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
-def validate(pdf_dir: Path, truth_csv: Path) -> List[Dict[str, Any]]:
-    """Compares OCR output for PDFs against expected values in a truth CSV.
+def validate(
+    pdf_dir: Path,
+    truth_csv: Path,
+    project_id: str,
+    location: str,
+    processor_id: str,
+) -> List[Dict[str, Any]]:
+    """Compares OCR output (via Document AI) against a truth CSV.
 
     Args:
         pdf_dir: Directory containing the PDF files.
         truth_csv: Path to the CSV file containing truth data.
-                   Expected columns: 'file_name', 'page', 'field_name', 'expected_text'.
+        project_id: GCP Project ID for Document AI.
+        location: GCP location for the Document AI processor.
+        processor_id: The ID of the Document AI processor.
 
     Returns:
-        A list of dictionaries, where each dictionary represents a row
-        from the truth CSV that resulted in a mismatch.
+        A list of dictionaries representing mismatches.
     """
     mismatches: List[Dict[str, Any]] = []
     processed_files = 0
@@ -63,20 +70,25 @@ def validate(pdf_dir: Path, truth_csv: Path) -> List[Dict[str, Any]]:
                         log.warning(f"Invalid page number '{page_str}' in row for {file_name}, defaulting to 1.")
                         page = 1
 
-                    # Run OCR on the specified page
-                    log.info(f"Running OCR for {pdf_path} (Page {page})")
-                    ocr_text = extract_text(pdf_path, page=page)
+                    # Run OCR using Document AI - page is ignored by this engine
+                    # Pass GCP details to the engine function
+                    log.info(f"Running Document AI OCR for {pdf_path}")
+                    ocr_text = extract_text(
+                        pdf_path=pdf_path,
+                        project_id=project_id,
+                        location=location,
+                        processor_id=processor_id
+                    )
                     processed_files += 1
 
                     # Simple substring check for validation
-                    # More sophisticated checks (regex, normalization) could be added here
                     if expected_text not in ocr_text:
-                        log.warning(f"Mismatch found for {file_name} (Page {page}): Expected '{expected_text}' not in OCR output.")
+                        log.warning(f"Mismatch found for {file_name}: Expected '{expected_text}' not in OCR output.")
                         row["validation_error"] = "Mismatch"
-                        row["ocr_output_snippet"] = ocr_text[:200] + ("..." if len(ocr_text) > 200 else "") # Add snippet for context
+                        row["ocr_output_snippet"] = ocr_text[:200] + ("..." if len(ocr_text) > 200 else "")
                         mismatches.append(row)
                     else:
-                        log.info(f"Match found for {file_name} (Page {page})")
+                        log.info(f"Match found for {file_name}")
 
                 except FileNotFoundError as e:
                     log.error(f"Error during validation for row {row}: {e}")
