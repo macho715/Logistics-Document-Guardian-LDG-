@@ -1,0 +1,40 @@
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Python virtual environment
+.venv/
+env/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.so
+*.pyd
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Linter/Formatter caches
+.mypy_cache/
+.ruff_cache/
+
+# Logs
+*.log
+
+# Secrets
+.env
+*.env.*
+secrets/ 
