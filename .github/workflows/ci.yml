@@ -14,14 +14,16 @@ jobs:
     # 1) 소스 체크아웃
     - uses: actions/checkout@v4
 
-    # DEBUG: List files after checkout
-    - name: 🐛 List files in workspace
-      run: |
-        echo "--- Files in workspace root (Linux) ---"
-        ls -la
-        echo "--- Files in workspace root (Windows) ---"
-        dir
-      shell: bash
+    # DEBUG: List files after checkout (OS-specific)
+    - name: 🐛 List files in workspace (Linux)
+      if: runner.os == 'Linux'
+      run: ls -la
+      # Default shell on Linux is bash
+
+    - name: 🐛 List files in workspace (Windows)
+      if: runner.os == 'Windows'
+      run: dir
+      shell: pwsh # Use PowerShell on Windows runner
 
     # 2) Python 설치 (GitHub 제공 툴캐시 활용)
     - name: ⬇️ Setup Python ${{ matrix.python-version }}
