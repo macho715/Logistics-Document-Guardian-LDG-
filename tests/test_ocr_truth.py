@@ -68,7 +68,8 @@ def test_file_exists(row: Dict[str, str]) -> None:
 #
 # def extract_field(text: str, field: str) -> str:
 #     # ... (your extraction logic here) ...
-#     return "extracted_value"
+#     result = "extracted_value" # Simulate getting a value
+#     return str(result) # Explicitly cast to str as requested
 #
 # @pytest.mark.parametrize("row", rows(), ids=generate_test_ids)
 # def test_field_value(row: Dict[str, str]) -> None:
