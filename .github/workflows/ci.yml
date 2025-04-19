@@ -51,10 +51,14 @@ jobs:
     - name: 🖋 Ruff format (apply Black-style)
       run: ruff format .
 
-    - name: 🔧 Ruff lint auto-fix
-      run: ruff check . --fix      # I001, E401 etc. auto-fix
+    - name: �� Ruff lint auto-fix -- ignore D401,E501
+      # Force ignore specific rules directly in the CI command
+      run: ruff check . --fix --ignore D401,E501
 
     - name: 🔍 Ruff lint verify
+      # Verification step should ideally also ignore the same rules if needed,
+      # but let's start with just the --fix step.
+      # Consider adding --ignore D401,E501 here too if verification fails.
       run: ruff check .           # Verify no issues remain after fix
 
     # 8) Mypy
