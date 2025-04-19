@@ -9,30 +9,34 @@ import csv, pytest
 PDF_DIR = Path("data/pdf")
 TRUTH_CSV_PATH = Path("data/truth/truth_sample.csv")
 
+
 # Load CSV data at the module level for parametrization
 def load_truth_data():
     if not TRUTH_CSV_PATH.exists():
-        return [] # Return empty list if file not found
+        return []  # Return empty list if file not found
     try:
         with TRUTH_CSV_PATH.open(encoding="utf-8") as f:
             reader = csv.DictReader(f)
             data = list(reader)
             # Basic check for header - assumes 'file_name' is essential
-            if data and 'file_name' not in data[0]:
-                 pytest.fail(f"Required column 'file_name' not found in {TRUTH_CSV_PATH}")
+            if data and "file_name" not in data[0]:
+                pytest.fail(f"Required column 'file_name' not found in {TRUTH_CSV_PATH}")
             return data
     except Exception as e:
         pytest.fail(f"Error reading {TRUTH_CSV_PATH}: {e}")
-    return [] # Should not be reached, but for safety
+    return []  # Should not be reached, but for safety
+
 
 TRUTH_DATA = load_truth_data()
+
 
 # Optional: If you still need the data as a fixture elsewhere
 @pytest.fixture(scope="session")
 def rows():
     if not TRUTH_DATA:
-         pytest.skip(f"No data loaded from {TRUTH_CSV_PATH} or file not found.")
+        pytest.skip(f"No data loaded from {TRUTH_CSV_PATH} or file not found.")
     return TRUTH_DATA
+
 
 def generate_test_ids(row):
     """Generates a readable ID for parametrized tests based on file_name."""
@@ -40,6 +44,7 @@ def generate_test_ids(row):
     if isinstance(row, dict):
         return row.get("file_name", "invalid_row_data")
     return "invalid_row_format"
+
 
 # Parametrize using the loaded data
 @pytest.mark.parametrize("row", TRUTH_DATA, ids=generate_test_ids)
@@ -49,6 +54,7 @@ def test_file_exists(row):
     assert file_name, f"Missing 'file_name' in row: {row}"
     pdf_path = PDF_DIR / file_name
     assert pdf_path.exists(), f"PDF file specified in CSV not found: {pdf_path}"
+
 
 # === Placeholder for future actual OCR tests ===
 # You can add more test functions here later to validate specific fields
@@ -77,7 +83,7 @@ def test_file_exists(row):
 #     actual_value = extract_field(ocr_text, field_name)
 #
 #     assert actual_value == expected_value, (
-#         f"{field_name} mismatch in {row['file_name']}:\n" 
-#         f"  Expected: '{expected_value}'\n" 
+#         f"{field_name} mismatch in {row['file_name']}:\n"
+#         f"  Expected: '{expected_value}'\n"
 #         f"  Got:      '{actual_value}'"
 #     )

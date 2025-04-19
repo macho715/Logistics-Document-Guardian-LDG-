@@ -1,4 +1,5 @@
 """Utility to generate a stub truth_sample.csv from PDF filenames."""
+
 # scripts/make_stub_truth.py
 from pathlib import Path
 import csv
@@ -8,7 +9,7 @@ TRUTH = Path("data/truth/truth_sample.csv")
 TRUTH.parent.mkdir(parents=True, exist_ok=True)
 
 rows = []
-pdf_files = list(PDF_DIR.glob("*.pdf")) # Get list of PDFs first
+pdf_files = list(PDF_DIR.glob("*.pdf"))  # Get list of PDFs first
 
 if not pdf_files:
     print(f"⚠️ No PDF files found in {PDF_DIR}. Creating an empty truth file with header.")
@@ -31,4 +32,4 @@ with TRUTH.open("w", newline="", encoding="utf-8") as f:
     if rows:
         writer.writerows(rows)
 
-print(f"✅ Stub truth written → {TRUTH}, rows={len(rows)}") 
+print(f"✅ Stub truth written → {TRUTH}, rows={len(rows)}")
