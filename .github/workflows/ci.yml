@@ -29,6 +29,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: "pip"             # pip 캐시 활성화
+        cache-dependency-path: requirements.lock # Explicitly point to the lock file
 
     # 3) OS‑별 Tesseract 설치
     - name: 🛠️ Install Tesseract (Windows)
