@@ -74,7 +74,6 @@ mypy_path = "src"
 explicit_package_bases = true      # "ldg.validator" / "src.ldg.validator" 중복 제거
 
 # 3) 외부 import 처리 전략
-#    - stub 없으면 경고로 두고, 정말 필요한 모듈만 override 로 무시
 ignore_missing_imports = false
 follow_imports = "skip"
 no_implicit_reexport = true
@@ -85,7 +84,13 @@ plugins = [
   # "sqlalchemy.ext.mypy.plugin",   # SQLAlchemy ORM 사용 시 주석 해제
 ]
 
-# 5) 경고가 필요 없는 외부 라이브러리 stub 무시
+# 5) 빌드 산출물 등 완전 제외 (Moved Here)
+exclude = [
+  "^dist/.*$",
+  "^build/.*$",
+]
+
+# --- Overrides ---
 [[tool.mypy.overrides]]
 module = [
   "pytesseract.*", # Keep this if using pytesseract wrapper later
@@ -98,12 +103,7 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["tests.*", "scripts.*"]
 ignore_errors = true
-
-# 7) 빌드 산출물 등 완전 제외
-exclude = [
-  "^dist/.*$",
-  "^build/.*$",
-]
+# exclude was removed from here
 # ───────────────────────────────────────────────────────────────────
 
 # This section is only needed if using pydantic plugin

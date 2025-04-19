@@ -25,7 +25,7 @@ DEFAULT_TRUTH_CSV = Path("data/truth/truth_sample.csv")
 DEFAULT_OUTPUT_DIR = Path("output")
 
 
-@app.command()
+@app.command()  # type: ignore[misc]  # Ignore untyped decorator error
 def run_validation(
     pdf_dir: Path = typer.Option(
         DEFAULT_PDF_DIR,
